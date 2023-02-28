@@ -1,21 +1,66 @@
-version: '3'
-
+version: '3.7'
 services:
-###> doctrine/doctrine-bundle ###
-  database:
-    image: postgres:${POSTGRES_VERSION:-15}-alpine
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-app}
-      # You should definitely change the password in production
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
-      POSTGRES_USER: ${POSTGRES_USER:-app}
-    volumes:
-      - database_data:/var/lib/postgresql/data:rw
-      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
-      # - ./docker/db/data:/var/lib/postgresql/data:rw
-###< doctrine/doctrine-bundle ###
 
-volumes:
-###> doctrine/doctrine-bundle ###
-  database_data:
-###< doctrine/doctrine-bundle ###
+  symfony:
+    container_name: elastic_symfony
+    build:
+      context: .docker/symfony
+      args:
+        TIMEZONE: 'Europe/Paris'
+    volumes:
+      - ./:/var/www/symfony
+    networks:
+      - symfony
+
+  nginx:
+    container_name: elastic_nginx
+    build:
+      context: .docker/nginx
+    volumes:
+      - ./:/var/www/symfony
+    env_file:
+      - .docker/.env.nginx
+    ports:
+      - 8012:80
+    networks:
+      - symfony
+
+  ###> doctrine/doctrine-bundle ###
+  database:
+    container_name: elastic_database
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: elastic
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: elastic
+    volumes:
+      - ./.docker/db/data:/var/lib/postgresql/data:rw
+    ports:
+      - 5434:5432
+    networks:
+      - symfony
+  ###< doctrine/doctrine-bundle ###
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.9
+    container_name: elastic_elasticsearch
+    environment:
+      - discovery.type=single-node
+    ports:
+      - 9200:9200
+      - 9300:9300
+    networks:
+      - symfony
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.9
+    container_name: elastic_kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - 5601:5601
+    networks:
+      - symfony
+
+networks:
+  symfony:

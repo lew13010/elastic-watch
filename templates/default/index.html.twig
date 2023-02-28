@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello DefaultController!{% endblock %}
+
+{% block body %}
+	<h1>Hello World!</h1>
+	<div>
+		<div>
+			<label for="elastic-search">Recherche avec ElasticSearch : </label>
+			<input type="text" id="elastic-search" name="elastic-search" placeholder="Recherche">
+			<ul id="elastic-search-results"></ul>
+		</div>
+		<div>
+			<label for="simple-search">Recherche simple : </label>
+			<input type="text" id="simple-search" name="simple-search" placeholder="Recherche">
+			<ul id="simple-search-results"></ul>
+		</div>
+	</div>
+{% endblock %}
+
+{% block javascripts %}
+	<script>
+        window.onload = () => {
+            const elasticSearchInput = document.getElementById('elastic-search');
+            const elasticSearchResults = document.getElementById('elastic-search-results');
+            const simpleSearchInput = document.getElementById('simple-search');
+            const simpleSearchResults = document.getElementById('simple-search-results');
+
+            elasticSearchInput.addEventListener('input', () => {
+                const term = elasticSearchInput.value;
+                fetch(`/elastic-search/${term}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        elasticSearchResults.innerHTML = '';
+                        data.forEach(result => {
+                            const li = document.createElement('li');
+                            li.textContent = `${result.title} - ${result.description}`;
+                            elasticSearchResults.appendChild(li);
+                        });
+                    });
+            });
+
+            simpleSearchInput.addEventListener('input', () => {
+                const term = simpleSearchInput.value;
+                fetch(`/simple-search/${term}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        simpleSearchResults.innerHTML = '';
+                        data.forEach(result => {
+                            const li = document.createElement('li');
+                            li.textContent = `${result.title} - ${result.description}`;
+                            simpleSearchResults.appendChild(li);
+                        });
+                    });
+            });
+        }
+	</script>
+{% endblock %}
+

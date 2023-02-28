@@ -1,0 +1,26 @@
+# Read the documentation: https://github.com/FriendsOfSymfony/FOSElasticaBundle/blob/master/doc/setup.md
+fos_elastica:
+    clients:
+        default: { url: '%env(ELASTICSEARCH_URL)%' }
+    indexes:
+        post:
+            settings:
+                analysis:
+                    analyzer:
+                        partial_matching:
+                            type: custom
+                            tokenizer: standard
+                            filter: [ lowercase, edge_ngram_filter ]
+                    filter:
+                        edge_ngram_filter:
+                            type: edge_ngram
+                            min_gram: 2
+                            max_gram: 20
+            persistence:
+                driver: orm
+                model: App\Entity\Post
+                provider: ~
+                finder: ~
+            properties:
+                title: { type: text, search_analyzer: partial_matching, analyzer: partial_matching }
+                description: { type: text, search_analyzer: partial_matching, analyzer: partial_matching }
